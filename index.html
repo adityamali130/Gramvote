@@ -1,0 +1,461 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#111827">
+<title>GramVote | जनमत सर्वेक्षण</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#101827;color:#fff;
+ font-family:Arial,sans-serif;padding:18px 14px;
+}
+.container{max-width:520px;margin:auto}
+header{
+ display:flex;justify-content:space-between;
+ align-items:center;padding:12px 2px 25px;
+}
+.logo{font-size:25px;font-weight:bold;color:#ff786b}
+.logo span{color:white}
+.live{font-size:11px;color:#4bd5a0}
+.card{
+ background:#202c3e;border:1px solid #35445a;
+ border-radius:15px;padding:19px;margin-bottom:16px;
+}
+h1{font-size:23px;line-height:1.5;margin:5px 0}
+.muted{color:#aab8ca;font-size:13px;line-height:1.7}
+.heading{font-size:18px;font-weight:bold;margin-bottom:17px}
+input{
+ width:100%;padding:14px;border:1px solid #46566e;
+ background:#182438;color:white;border-radius:9px;
+ font-size:15px;outline:none;
+}
+button{
+ width:100%;padding:14px;border:0;border-radius:9px;
+ background:#625df0;color:white;font-weight:bold;
+ font-size:15px;margin-top:13px;cursor:pointer;
+}
+button:disabled{opacity:.5;cursor:not-allowed}
+.secondary{background:#35445a}
+.candidate{
+ background:#29384d;border:1px solid #41516a;
+ border-radius:11px;padding:14px;margin:11px 0;
+ display:flex;align-items:center;gap:12px;
+ cursor:pointer;line-height:1.5;
+}
+.candidate input{width:19px;height:19px;accent-color:#817aff}
+.candidate.selected{border-color:#8b87ff;background:#303b59}
+.result{
+ background:#29384d;border-radius:10px;
+ padding:14px;margin:12px 0;
+}
+.resulttop{display:flex;justify-content:space-between;gap:8px}
+.bar{
+ height:10px;background:#46546a;border-radius:20px;
+ overflow:hidden;margin:12px 0 8px;
+}
+.fill{height:100%;border-radius:20px;transition:width .4s}
+.small{font-size:12px;color:#b5c2d3}
+.total{font-size:29px;font-weight:bold;margin:7px 0}
+.hidden{display:none!important}
+.notice{
+ padding:12px;background:#29384d;border-radius:9px;
+ color:#c2cede;font-size:13px;line-height:1.6;
+}
+.modal{
+ position:fixed;inset:0;background:#080e19ed;
+ display:flex;align-items:center;justify-content:center;
+ padding:20px;z-index:10;
+}
+.modalbox{
+ width:100%;max-width:400px;background:#202c3e;
+ border:1px solid #46546a;border-radius:16px;
+ padding:24px;
+}
+.footer{text-align:center;color:#8392a6;font-size:12px;padding:20px}
+a{color:#aaa5ff;text-decoration:none}
+.error{color:#ff786b!important}
+</style>
+</head>
+
+<body>
+
+<div class="modal" id="nameModal">
+ <div class="modalbox">
+  <div class="logo">Gram<span style="color:white">Vote</span></div>
+  <h1>जनमत सर्वेक्षण में आपका स्वागत है</h1>
+  <p class="muted">आगे बढ़ने के लिए कृपया अपना पूरा नाम दर्ज करें।</p>
+  <input id="voterName" maxlength="60" placeholder="अपना पूरा नाम लिखें">
+  <button id="continueBtn" disabled>कृपया प्रतीक्षा करें...</button>
+  <p id="nameError" class="small"></p>
+ </div>
+</div>
+
+<div class="container">
+
+<header>
+ <div class="logo">Gram<span>Vote</span></div>
+ <div class="live">● LIVE RESULTS</div>
+</header>
+
+<div class="card">
+ <h1>ग्राम पंचायत डाबड़ा<br>वार्ड नंबर-6</h1>
+ <p class="muted">नाथखेड़ी से वार्डपंच उम्मीदवार<br>जनमत सर्वेक्षण</p>
+</div>
+
+<div class="card" id="votingSection">
+ <div class="heading">अपना पसंदीदा उम्मीदवार चुनें</div>
+ <div id="candidateList">
+  <p class="muted">उम्मीदवार लोड हो रहे हैं...</p>
+ </div>
+ <button id="voteBtn" disabled>अपना वोट दर्ज करें</button>
+ <button class="secondary" id="showResults">परिणाम देखें</button>
+ <p class="small" id="voteMessage"></p>
+</div>
+
+<div class="card hidden" id="thankSection">
+ <h1>धन्यवाद!</h1>
+ <p class="muted">आपका वोट सफलतापूर्वक दर्ज किया गया है। आपकी भागीदारी के लिए धन्यवाद।</p>
+ <button id="thankResults">लाइव परिणाम देखें</button>
+</div>
+
+<div class="card hidden" id="resultsSection">
+ <div class="heading">📊 सर्वेक्षण परिणाम</div>
+ <div class="total" id="totalVotes">33</div>
+ <div class="muted">कुल वोट</div>
+ <div id="resultsList"></div>
+ <p class="small">ये परिणाम शुरुआती सर्वे आंकड़ों और नए वोटों के आधार पर हैं।</p>
+ <button class="secondary" id="backBtn">वापस जाएँ</button>
+</div>
+
+<div class="footer">
+ ग्राम पंचायत डाबड़ा · जनमत सर्वेक्षण
+ <br><br>
+ <a href="admin.html">Admin Login</a>
+</div>
+
+</div>
+
+<script type="module">
+
+import {initializeApp}
+from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+
+import {
+ getAuth, signInAnonymously
+}
+from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
+
+import {
+ getFirestore, collection, doc, onSnapshot,
+ writeBatch, serverTimestamp, getDoc, getDocs
+}
+from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+
+const firebaseConfig = {
+ apiKey: "AIzaSyAgmiAmbX69Dsjk32Y_Y9o45fTNwI086wk",
+ authDomain: "voting-2c190.firebaseapp.com",
+ projectId: "voting-2c190",
+ storageBucket: "voting-2c190.firebasestorage.app",
+ messagingSenderId: "552391892742",
+ appId: "1:552391892742:web:3f5f530e4ee0e637174887"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const $ = id => document.getElementById(id);
+
+let currentName = "";
+let selected = "";
+let candidates = [];
+let alreadyVoted = false;
+let ready = false;
+let resultsUnsubscribe = null;
+
+function showMessage(message){
+ $("voteMessage").textContent = message;
+}
+
+function escapeHTML(value){
+ return String(value).replace(/[&<>"']/g,c=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",
+  '"':"&quot;","'":"&#39;"
+ })[c]);
+}
+
+function showError(message){
+ $("candidateList").innerHTML =
+  `<p class="error">${escapeHTML(message)}</p>`;
+}
+
+function renderCandidates(){
+
+ if(!candidates.length){
+  showError("Firestore में उम्मीदवारों का डेटा नहीं मिला।");
+  return;
+ }
+
+ $("candidateList").innerHTML = candidates.map(c=>`
+  <label class="candidate ${selected===c.id?'selected':''}">
+   <input type="radio" name="candidate"
+    value="${escapeHTML(c.id)}"
+    ${selected===c.id?'checked':''}>
+   <span>${escapeHTML(c.name || "नाम उपलब्ध नहीं")}</span>
+  </label>
+ `).join("");
+
+ document.querySelectorAll('input[name="candidate"]').forEach(input=>{
+  input.addEventListener("change",()=>{
+   selected = input.value;
+   renderCandidates();
+   $("voteBtn").disabled = !ready || alreadyVoted || !selected;
+  });
+ });
+
+ $("voteBtn").disabled = !ready || alreadyVoted || !selected;
+}
+
+async function loadCandidates(){
+
+ $("candidateList").innerHTML =
+  '<p class="muted">उम्मीदवार लोड हो रहे हैं...</p>';
+
+ try{
+  const snapshot = await getDocs(collection(db,"candidates"));
+
+  candidates = snapshot.docs.map(d=>({
+   id:d.id,
+   ...d.data()
+  })).sort((a,b)=>(Number(a.order)||0)-(Number(b.order)||0));
+
+  if(!candidates.length){
+   showError("Firestore में candidates collection खाली है। उम्मीदवारों के दस्तावेज़ जोड़ें।");
+   return;
+  }
+
+  renderCandidates();
+
+ }catch(error){
+  console.error("Candidate Load Error:",error);
+  showError("उम्मीदवार लोड नहीं हुए: "+(error.message || error.code));
+ }
+}
+
+function loadResults(){
+
+ if(resultsUnsubscribe) resultsUnsubscribe();
+
+ resultsUnsubscribe = onSnapshot(
+  collection(db,"votes"),
+  snapshot=>{
+
+   const live = {};
+
+   snapshot.forEach(d=>{
+    const id = d.data().candidateId;
+    live[id] = (live[id] || 0) + 1;
+   });
+
+   const data = candidates.map(c=>({
+    id:c.id,
+    name:c.name,
+    color:c.color || "#7775ff",
+    votes:Number(c.initialVotes || 0) + (live[c.id] || 0),
+    order:Number(c.order || 0)
+   })).sort((a,b)=>a.order-b.order);
+
+   const total = data.reduce((sum,c)=>sum+c.votes,0);
+
+   $("totalVotes").textContent = total;
+
+   $("resultsList").innerHTML = data.map(c=>{
+    const pct = total ? c.votes / total * 100 : 0;
+
+    return `
+     <div class="result">
+      <div class="resulttop">
+       <strong>${escapeHTML(c.name)}</strong>
+       <strong>${pct.toFixed(2)}%</strong>
+      </div>
+      <div class="bar">
+       <div class="fill"
+        style="width:${pct}%;background:${escapeHTML(c.color)}">
+       </div>
+      </div>
+      <div class="small">${c.votes} वोट</div>
+     </div>
+    `;
+   }).join("");
+
+  },
+  error=>{
+   console.error("Results Error:",error);
+   $("resultsList").innerHTML =
+    '<p class="error">परिणाम लोड नहीं हुए: '+
+    escapeHTML(error.message || error.code)+'</p>';
+  }
+ );
+}
+
+async function start(){
+
+ $("continueBtn").disabled = true;
+ $("continueBtn").textContent = "कनेक्ट हो रहा है...";
+
+ try{
+
+  let user = auth.currentUser;
+
+  if(!user){
+   const credential = await signInAnonymously(auth);
+   user = credential.user;
+  }
+
+  if(!user){
+   throw new Error("Anonymous Login नहीं हो पाया।");
+  }
+
+  const voteRef = doc(db,"votes",user.uid);
+  const voteSnap = await getDoc(voteRef);
+
+  if(voteSnap.exists()){
+   alreadyVoted = true;
+   $("nameModal").classList.add("hidden");
+   $("votingSection").classList.add("hidden");
+   $("thankSection").classList.remove("hidden");
+  }
+
+  await loadCandidates();
+
+  ready = true;
+
+  if(!alreadyVoted){
+   $("continueBtn").disabled = false;
+   $("continueBtn").textContent = "आगे बढ़ें";
+  }
+
+  $("voteBtn").disabled = true;
+  loadResults();
+
+ }catch(error){
+
+  console.error("Firebase Start Error:",error);
+
+  $("continueBtn").disabled = true;
+  $("continueBtn").textContent = "कनेक्शन नहीं हुआ";
+
+  $("nameError").className = "small error";
+  $("nameError").textContent =
+   "Firebase Error: "+(error.message || error.code || "कनेक्शन की समस्या");
+
+  showError("Firebase से कनेक्शन नहीं हो पाया। ऊपर दिख रहा Error देखें।");
+ }
+}
+
+$("continueBtn").addEventListener("click",()=>{
+
+ const name = $("voterName").value.trim();
+
+ if(!ready){
+  $("nameError").textContent = "कृपया कनेक्शन पूरा होने तक प्रतीक्षा करें।";
+  return;
+ }
+
+ if(name.length < 2){
+  $("nameError").textContent = "कृपया अपना सही नाम लिखें।";
+  return;
+ }
+
+ currentName = name;
+ $("nameModal").classList.add("hidden");
+
+ if(!alreadyVoted){
+  $("votingSection").classList.remove("hidden");
+ }
+});
+
+$("voteBtn").addEventListener("click",async()=>{
+
+ if(!currentName || !selected || !auth.currentUser || !ready)return;
+
+ $("voteBtn").disabled = true;
+ showMessage("आपका वोट दर्ज किया जा रहा है...");
+
+ try{
+
+  const user = auth.currentUser;
+  const voteRef = doc(db,"votes",user.uid);
+  const recordRef = doc(db,"voterRecords",user.uid);
+
+  // दोबारा वोट रोकने के लिए पहले जाँच
+  const existingVote = await getDoc(voteRef);
+
+  if(existingVote.exists()){
+   alreadyVoted = true;
+   $("votingSection").classList.add("hidden");
+   $("thankSection").classList.remove("hidden");
+   return;
+  }
+
+  const batch = writeBatch(db);
+
+  batch.set(voteRef,{
+   candidateId:selected,
+   createdAt:serverTimestamp()
+  });
+
+  batch.set(recordRef,{
+   name:currentName,
+   candidateId:selected,
+   createdAt:serverTimestamp()
+  });
+
+  await batch.commit();
+
+  alreadyVoted = true;
+  $("votingSection").classList.add("hidden");
+  $("thankSection").classList.remove("hidden");
+  showMessage("");
+
+ }catch(error){
+
+  console.error("Vote Error:",error);
+
+  showMessage(
+   "वोट दर्ज नहीं हुआ: "+(error.message || error.code)
+  );
+
+  $("voteBtn").disabled = false;
+ }
+});
+
+$("showResults").onclick=()=>{
+ $("votingSection").classList.add("hidden");
+ $("resultsSection").classList.remove("hidden");
+};
+
+$("thankResults").onclick=()=>{
+ $("thankSection").classList.add("hidden");
+ $("resultsSection").classList.remove("hidden");
+};
+
+$("backBtn").onclick=()=>{
+ $("resultsSection").classList.add("hidden");
+
+ if(alreadyVoted){
+  $("thankSection").classList.remove("hidden");
+ }else{
+  $("votingSection").classList.remove("hidden");
+ }
+};
+
+start();
+
+</script>
+</body>
+</html>
