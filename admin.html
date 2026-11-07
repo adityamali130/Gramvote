@@ -1,0 +1,422 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101827">
+
+<title>GramVote - Admin Panel</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px 14px;
+  background: #101827;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  max-width: 550px;
+  margin: auto;
+}
+
+.card {
+  background: #202c3e;
+  border: 1px solid #394961;
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 17px;
+}
+
+.logo {
+  font-size: 27px;
+  font-weight: bold;
+  color: #ff7669;
+}
+
+.logo span {
+  color: white;
+}
+
+h1 {
+  font-size: 24px;
+}
+
+h2 {
+  font-size: 19px;
+}
+
+.muted {
+  color: #aab8ca;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+input {
+  width: 100%;
+  padding: 15px;
+  margin-top: 12px;
+  background: #172438;
+  border: 1px solid #46566e;
+  border-radius: 9px;
+  color: white;
+  font-size: 15px;
+  outline: none;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 14px;
+  border: none;
+  border-radius: 9px;
+  background: #625df0;
+  color: white;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.logout {
+  background: #394961;
+}
+
+.error {
+  color: #ff817a;
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.stat {
+  background: #29384d;
+  padding: 17px;
+  border-radius: 10px;
+  margin-top: 12px;
+}
+
+.number {
+  font-size: 30px;
+  font-weight: bold;
+}
+
+.result {
+  background: #29384d;
+  border-radius: 10px;
+  padding: 14px;
+  margin-top: 12px;
+}
+
+.bar {
+  height: 10px;
+  background: #46546a;
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 12px 0;
+}
+
+.fill {
+  height: 100%;
+  border-radius: 20px;
+}
+
+.footer {
+  text-align: center;
+  color: #8795a8;
+  font-size: 12px;
+  padding: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+
+<div class="card">
+  <div class="logo">
+    Gram<span>Vote</span>
+  </div>
+  <p class="muted">
+    व्यवस्थापक पैनल
+  </p>
+</div>
+
+<!-- LOGIN SCREEN -->
+
+<div class="card" id="loginPanel">
+
+  <h1>Admin Login</h1>
+
+  <p class="muted">
+    कृपया अपना Admin Password दर्ज करें।
+  </p>
+
+  <input
+    type="password"
+    id="adminPassword"
+    placeholder="अपना Secret Password लिखें"
+    autocomplete="off"
+  >
+
+  <button id="loginButton">
+    Login करें
+  </button>
+
+  <p class="error" id="error"></p>
+
+</div>
+
+<!-- DASHBOARD -->
+
+<div id="dashboard" class="hidden">
+
+  <div class="card">
+
+    <h1>स्वागत है, Admin!</h1>
+
+    <p class="muted">
+      ग्राम पंचायत डाबड़ा वार्ड नंबर-6
+    </p>
+
+    <button class="logout" id="logoutButton">
+      Logout
+    </button>
+
+  </div>
+
+  <div class="card">
+
+    <h2>सर्वेक्षण का विवरण</h2>
+
+    <div class="stat">
+      <div class="muted">कुल वोट</div>
+      <div class="number" id="totalVotes">33</div>
+    </div>
+
+    <div id="results">
+      <p class="muted">परिणाम लोड हो रहे हैं...</p>
+    </div>
+
+  </div>
+
+  <div class="card">
+    <h2>वोटर रिकॉर्ड की सुरक्षा</h2>
+    <p class="muted">
+      व्यक्तिगत वोटर रिकॉर्ड इस सार्वजनिक
+      Password-only Dashboard में उपलब्ध नहीं हैं।
+      उन्हें देखने के लिए Firebase Admin Authentication
+      और सुरक्षित Database Rules आवश्यक हैं।
+    </p>
+  </div>
+
+</div>
+
+<div class="footer">
+  GramVote Admin Panel
+  <br>
+  ग्राम पंचायत डाबड़ा
+</div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  onSnapshot
+}
+from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAgmiAmbX69Dsjk32_Y9o45fTNwI086wk",
+  authDomain: "voting-2c190.firebaseapp.com",
+  projectId: "voting-2c190",
+  storageBucket: "voting-2c190.firebasestorage.app",
+  messagingSenderId: "552391892742",
+  appId: "1:552391892742:web:3f5f530e4ee0e637174887"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// अपना Secret Password यहाँ बदलें।
+const ADMIN_PASSWORD = "aosedsbpkhomh";
+
+const loginPanel = document.getElementById("loginPanel");
+const dashboard = document.getElementById("dashboard");
+
+let unsubscribeVotes = null;
+let unsubscribeCandidates = null;
+let voteData = [];
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, c => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[c]);
+}
+
+// ADMIN LOGIN
+
+document.getElementById("loginButton").onclick = function () {
+
+  const enteredPassword =
+    document.getElementById("adminPassword").value;
+
+  if (enteredPassword === ADMIN_PASSWORD) {
+
+    loginPanel.classList.add("hidden");
+    dashboard.classList.remove("hidden");
+
+    document.getElementById("error").textContent = "";
+
+    loadDashboard();
+
+  } else {
+
+    document.getElementById("error").textContent =
+      "गलत Password! कृपया दोबारा प्रयास करें।";
+
+  }
+
+};
+
+// LOAD PUBLIC RESULTS
+
+function loadDashboard() {
+
+  unsubscribeVotes = onSnapshot(
+    collection(db, "votes"),
+    snapshot => {
+
+      voteData = snapshot.docs.map(d => d.data());
+      renderResults();
+
+    },
+    error => {
+      console.error(error);
+      document.getElementById("results").textContent =
+        "वोट डेटा लोड नहीं हो सका।";
+    }
+  );
+
+  unsubscribeCandidates = onSnapshot(
+    collection(db, "candidates"),
+    snapshot => {
+
+      const candidates = snapshot.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      }));
+
+      renderResults(candidates);
+
+    },
+    error => {
+      console.error(error);
+      document.getElementById("results").textContent =
+        "उम्मीदवारों का डेटा लोड नहीं हो सका।";
+    }
+  );
+
+  function renderResults(candidates) {
+
+    if (!candidates) return;
+
+    let total = 0;
+
+    const data = candidates.map(c => {
+
+      const newVotes = voteData.filter(
+        v => v.candidateId === c.id
+      ).length;
+
+      const votes =
+        Number(c.initialVotes || 0) + newVotes;
+
+      total += votes;
+
+      return {
+        name: c.name,
+        votes,
+        color: c.color || "#7775ff",
+        order: c.order || 0
+      };
+
+    }).sort((a,b) => a.order - b.order);
+
+    document.getElementById("totalVotes").textContent =
+      total;
+
+    document.getElementById("results").innerHTML =
+      data.map(c => {
+
+        const percentage =
+          total ? (c.votes / total) * 100 : 0;
+
+        return `
+          <div class="result">
+
+            <strong>${escapeHTML(c.name)}</strong>
+
+            <div class="bar">
+              <div class="fill"
+                style="width:${percentage}%;
+                background:${c.color}">
+              </div>
+            </div>
+
+            <div class="muted">
+              ${c.votes} वोट · ${percentage.toFixed(2)}%
+            </div>
+
+          </div>
+        `;
+
+      }).join("");
+
+  }
+
+}
+
+// LOGOUT
+
+document.getElementById("logoutButton").onclick =
+function () {
+
+  if (unsubscribeVotes) unsubscribeVotes();
+  if (unsubscribeCandidates) unsubscribeCandidates();
+
+  unsubscribeVotes = null;
+  unsubscribeCandidates = null;
+
+  document.getElementById("adminPassword").value = "";
+
+  dashboard.classList.add("hidden");
+  loginPanel.classList.remove("hidden");
+
+};
+
+</script>
+
+</body>
+</html>
